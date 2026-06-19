@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-06-19
+
+### Fixed
+- Widen `doctrine/persistence` constraint to `^3.0 || ^4.0`
+
+---
+
 ## [1.0.0] - 2026-06-19
 
 ### Added
@@ -28,5 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `doctrine/persistence` `^3.0`
 - `letkode/helpers-bundle` `^1.0`
 
-[Unreleased]: https://github.com/letkode/common-bundle/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/letkode/common-bundle/releases/tag/v1.0.0
+[Unreleased]: https://github.com/letkode/common-bundle/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/letkode/common-bundle/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/letkode/common-bundle/releases/tag/1.0.0
