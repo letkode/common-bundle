@@ -1,0 +1,17 @@
+/vendor
+/.claude
+/coverage
+/composer.lock
+/.phpunit.result.cache
+/.php-cs-fixer.cache
+/.php-cs-fixer.php
+/.php_cs.cache
+/phpunit.xml
+
+/docker-compose.*.yml
+/.env
+/.env.local
+/.env.*.local
+/.idea
+/.vscode
+/.DS_Store
