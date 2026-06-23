@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace Letkode\CommonBundle\Attribute\Constraint;
 
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 class UniqueFieldValidator extends ConstraintValidator
 {
-    public function __construct(private readonly ManagerRegistry $registry)
+    public function __construct(
+        private readonly ManagerRegistry $registry,
+        private readonly RequestStack $requestStack
+    )
     {
     }
 
@@ -40,16 +44,28 @@ class UniqueFieldValidator extends ConstraintValidator
             return;
         }
 
+        // ignoreProperty (existing — ID comes from the DTO object)
         if (null !== $constraint->ignoreProperty) {
             $object = $this->context->getObject();
-
             if (null !== $object) {
                 $ignoreId = new \ReflectionProperty($object, $constraint->ignoreProperty)->getValue($object);
-
                 if (null !== $ignoreId) {
                     $ids = $em->getClassMetadata($constraint->entityClass)->getIdentifierValues($existing);
-
                     if (\in_array($ignoreId, $ids, strict: true)) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        // ignoreRouteParam (new — ID comes from the route, ex. {uuid})
+        if (null !== $constraint->ignoreRouteParam) {
+            $request = $this->requestStack->getCurrentRequest();
+            $routeValue = $request?->attributes->get($constraint->ignoreRouteParam);
+            if (null !== $routeValue) {
+                $ids = $em->getClassMetadata($constraint->entityClass)->getIdentifierValues($existing);
+                foreach ($ids as $id) {
+                    if ((string) $id === (string) $routeValue) {
                         return;
                     }
                 }
