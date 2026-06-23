@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Letkode\CommonBundle\Tests\Attribute\Constraint;
 
-use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueFieldValidator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -84,7 +83,7 @@ final class UniqueFieldValidatorTest extends TestCase
 
         $this->validator->validate(
             'test@example.com',
-            new UniqueField(entityClass: \stdClass::class, field: 'email', ignoreProperty: 'id'),
+            new UniqueField(entityClass: \stdClass::class, field: 'email', skipBySelfProperty: 'id'),
         );
     }
 
@@ -101,34 +100,34 @@ final class UniqueFieldValidatorTest extends TestCase
 
         $this->validator->validate(
             'test@example.com',
-            new UniqueField(entityClass: \stdClass::class, field: 'email', ignoreProperty: 'id'),
+            new UniqueField(entityClass: \stdClass::class, field: 'email', skipBySelfProperty: 'id'),
         );
     }
 
-    public function testIgnoreRouteParamSkipsViolationWhenRouteValueMatchesId(): void
+    public function testIgnoreRouteParamSkipsViolationWhenEntityFieldMatchesRoute(): void
     {
-        $existing = new \stdClass();
-        $em = $this->mockEm(\stdClass::class, $existing);
-        $em->method('getClassMetadata')->willReturn($this->mockMetadata(['uuid' => 'abc-123']));
+        $uuid = '550e8400-e29b-41d4-a716-446655440000';
+
+        $existing = new class { public string $uuid = '550e8400-e29b-41d4-a716-446655440000'; };
+        $em = $this->mockEm($existing::class, $existing);
         $this->registry->method('getManagerForClass')->willReturn($em);
 
         $request = Request::create('/');
-        $request->attributes->set('uuid', 'abc-123');
+        $request->attributes->set('uuid', $uuid);
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
         $this->context->expects(self::never())->method('buildViolation');
 
         $this->validator->validate(
             'test@example.com',
-            new UniqueField(entityClass: \stdClass::class, field: 'email', ignoreRouteParam: 'uuid'),
+            new UniqueField(entityClass: $existing::class, field: 'email', skipRouteParamValue: 'uuid'),
         );
     }
 
-    public function testIgnoreRouteParamAddsViolationWhenRouteValueDiffers(): void
+    public function testIgnoreRouteParamAddsViolationWhenEntityFieldDiffersFromRoute(): void
     {
-        $existing = new \stdClass();
-        $em = $this->mockEm(\stdClass::class, $existing);
-        $em->method('getClassMetadata')->willReturn($this->mockMetadata(['uuid' => 'abc-123']));
+        $existing = new class { public string $uuid = 'abc-123'; };
+        $em = $this->mockEm($existing::class, $existing);
         $this->registry->method('getManagerForClass')->willReturn($em);
 
         $request = Request::create('/');
@@ -139,15 +138,37 @@ final class UniqueFieldValidatorTest extends TestCase
 
         $this->validator->validate(
             'test@example.com',
-            new UniqueField(entityClass: \stdClass::class, field: 'email', ignoreRouteParam: 'uuid'),
+            new UniqueField(entityClass: $existing::class, field: 'email', skipRouteParamValue: 'uuid'),
+        );
+    }
+
+    public function testIgnoreRouteParamUsesCustomEntityField(): void
+    {
+        $existing = new class { public string $slug = 'my-slug'; };
+        $em = $this->mockEm($existing::class, $existing);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $request = Request::create('/');
+        $request->attributes->set('slug', 'my-slug');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $this->context->expects(self::never())->method('buildViolation');
+
+        $this->validator->validate(
+            'test@example.com',
+            new UniqueField(
+                entityClass: $existing::class,
+                field: 'email',
+                skipRouteParamValue: 'slug',
+                skipByRouteFieldProperty: 'slug',
+            ),
         );
     }
 
     public function testIgnoreRouteParamAddsViolationWhenNoCurrentRequest(): void
     {
-        $existing = new \stdClass();
-        $em = $this->mockEm(\stdClass::class, $existing);
-        $em->method('getClassMetadata')->willReturn($this->mockMetadata(['uuid' => 'abc-123']));
+        $existing = new class { public string $uuid = 'abc-123'; };
+        $em = $this->mockEm($existing::class, $existing);
         $this->registry->method('getManagerForClass')->willReturn($em);
 
         $this->requestStack->method('getCurrentRequest')->willReturn(null);
@@ -156,7 +177,7 @@ final class UniqueFieldValidatorTest extends TestCase
 
         $this->validator->validate(
             'test@example.com',
-            new UniqueField(entityClass: \stdClass::class, field: 'email', ignoreRouteParam: 'uuid'),
+            new UniqueField(entityClass: $existing::class, field: 'email', skipRouteParamValue: 'uuid'),
         );
     }
 

@@ -14,8 +14,9 @@ class UniqueField extends Constraint
         public readonly string $field,
         public readonly string $message = 'unique_field.not_unique',
         public readonly string|null $em = null,
-        public readonly string|null $ignoreProperty = null,
-        public readonly string|null $ignoreRouteParam = null,
+        public readonly string|null $skipBySelfProperty = null,
+        public readonly string|null $skipRouteParamValue = null,
+        public readonly string $skipByRouteFieldProperty = 'uuid',
         array|null $groups = null,
         mixed $payload = null,
     ) {

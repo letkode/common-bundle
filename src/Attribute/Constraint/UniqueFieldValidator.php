@@ -44,30 +44,26 @@ class UniqueFieldValidator extends ConstraintValidator
             return;
         }
 
-        // ignoreProperty (existing — ID comes from the DTO object)
-        if (null !== $constraint->ignoreProperty) {
+        if (null !== $constraint->skipBySelfProperty) {
             $object = $this->context->getObject();
             if (null !== $object) {
-                $ignoreId = new \ReflectionProperty($object, $constraint->ignoreProperty)->getValue($object);
-                if (null !== $ignoreId) {
+                $selfId = new \ReflectionProperty($object, $constraint->skipBySelfProperty)->getValue($object);
+                if (null !== $selfId) {
                     $ids = $em->getClassMetadata($constraint->entityClass)->getIdentifierValues($existing);
-                    if (\in_array($ignoreId, $ids, strict: true)) {
+                    if (\in_array($selfId, $ids, strict: true)) {
                         return;
                     }
                 }
             }
         }
 
-        // ignoreRouteParam (new — ID comes from the route, ex. {uuid})
-        if (null !== $constraint->ignoreRouteParam) {
+        if (null !== $constraint->skipRouteParamValue) {
             $request = $this->requestStack->getCurrentRequest();
-            $routeValue = $request?->attributes->get($constraint->ignoreRouteParam);
+            $routeValue = $request?->attributes->get($constraint->skipRouteParamValue);
             if (null !== $routeValue) {
-                $ids = $em->getClassMetadata($constraint->entityClass)->getIdentifierValues($existing);
-                foreach ($ids as $id) {
-                    if ((string) $id === (string) $routeValue) {
-                        return;
-                    }
+                $entityValue = (new \ReflectionProperty($existing, $constraint->skipByRouteFieldProperty))->getValue($existing);
+                if (null !== $entityValue && (string) $entityValue === (string) $routeValue) {
+                    return;
                 }
             }
         }
