@@ -283,6 +283,67 @@ final class UniqueFieldValidatorTest extends TestCase
         );
     }
 
+    public function testScalarFilterScopeNarrowsLookupBySiblingProperty(): void
+    {
+        $dto = new class {
+            public string $taxId = '20123456789';
+            public string $type = 'ruc';
+        };
+        $existing = new \stdClass();
+
+        $repo = $this->createMock(ObjectRepository::class);
+        $repo->expects(self::once())
+            ->method('findOneBy')
+            ->with(['taxId' => '20123456789', 'type' => 'ruc'])
+            ->willReturn($existing);
+
+        $em = $this->createMock(ObjectManager::class);
+        $em->method('getRepository')->with(\stdClass::class)->willReturn($repo);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $this->context->method('getObject')->willReturn($dto);
+        $this->context->method('buildViolation')->willReturn($this->mockViolationBuilder(expectAddViolation: true));
+
+        $this->validator->validate(
+            $dto->taxId,
+            new UniqueField(
+                entityClass: \stdClass::class,
+                field: 'taxId',
+                scopes: [new UniqueFieldScope('type', UniqueFieldScopeSource::PropertyPath, 'type', UniqueFieldScopeMode::ScalarFilter)],
+            ),
+        );
+    }
+
+    public function testScalarFilterScopeSkipsViolationWhenNoMatchUnderCriteria(): void
+    {
+        $dto = new class {
+            public string $taxId = '20123456789';
+            public string $type = 'dni';
+        };
+
+        $repo = $this->createMock(ObjectRepository::class);
+        $repo->expects(self::once())
+            ->method('findOneBy')
+            ->with(['taxId' => '20123456789', 'type' => 'dni'])
+            ->willReturn(null);
+
+        $em = $this->createMock(ObjectManager::class);
+        $em->method('getRepository')->with(\stdClass::class)->willReturn($repo);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $this->context->method('getObject')->willReturn($dto);
+        $this->context->expects(self::never())->method('buildViolation');
+
+        $this->validator->validate(
+            $dto->taxId,
+            new UniqueField(
+                entityClass: \stdClass::class,
+                field: 'taxId',
+                scopes: [new UniqueFieldScope('type', UniqueFieldScopeSource::PropertyPath, 'type', UniqueFieldScopeMode::ScalarFilter)],
+            ),
+        );
+    }
+
     private function mockEm(string $class, mixed $findResult): ObjectManager&MockObject
     {
         $repo = $this->createMock(ObjectRepository::class);

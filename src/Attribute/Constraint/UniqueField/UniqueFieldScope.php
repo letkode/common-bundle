@@ -6,9 +6,10 @@ namespace Letkode\CommonBundle\Attribute\Constraint\UniqueField;
 
 /**
  * One resolution rule for a UniqueField check: read a value from $source (by $key), then either
- * narrow the lookup (Filter, via an association named $entityField pointing to $scopeEntityClass)
- * or exclude a match from the violation (Exclude, comparing $entityField on the found record
- * against the resolved value).
+ * narrow the lookup via an association named $entityField pointing to $scopeEntityClass (Filter),
+ * narrow the lookup via a plain scalar criterion on $entityField (ScalarFilter), or exclude a
+ * match from the violation by comparing $entityField on the found record against the resolved
+ * value (Exclude).
  */
 final readonly class UniqueFieldScope
 {

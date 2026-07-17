@@ -54,6 +54,12 @@ class UniqueFieldValidator extends ConstraintValidator
                 continue;
             }
 
+            if (UniqueFieldScopeMode::ScalarFilter === $scope->mode) {
+                $criteria[$scope->entityField] = $rawValue;
+
+                continue;
+            }
+
             if (null === $scope->scopeEntityClass) {
                 throw new \LogicException(\sprintf('UniqueFieldScope for "%s" requires scopeEntityClass when mode is Filter.', $scope->entityField));
             }

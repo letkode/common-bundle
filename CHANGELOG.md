@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-07-17
+
+### Added
+- `UniqueFieldScopeMode::ScalarFilter` — narrows a `UniqueField` lookup by a plain scalar/enum sibling property (`UniqueFieldScopeSource::PropertyPath`) on the same DTO, without requiring an associated entity (`scopeEntityClass`). Supports compound uniqueness checks across multiple scalar fields on the same entity (e.g. `taxId` unique per `type`) by adding one scope per field.
+
+---
+
 ## [1.1.0] - 2026-07-17
 
 ### Changed
