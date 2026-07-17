@@ -47,7 +47,29 @@ throw new ValueObjectException('Invalid email.', translationKey: 'errors.email_i
 Validates that a field value is unique in the database via Doctrine.
 
 ```php
-#[UniqueField(entity: User::class, field: 'email')]
+#[UniqueField(entityClass: User::class, field: 'email')]
+public string $email;
+```
+
+Use `scopes` to narrow the lookup and/or exclude the record being edited from the check. Each
+`UniqueFieldScope` resolves a value from a route param or a sibling property, then either
+`Filter`s the query (via an association) or `Exclude`s a match from the violation:
+
+```php
+// Update DTO: same email is fine if it's still the record at /users/{uuid}
+#[UniqueField(
+    entityClass: User::class,
+    field: 'email',
+    scopes: [new UniqueFieldScope('uuid', UniqueFieldScopeSource::RouteParam, 'uuid', UniqueFieldScopeMode::Exclude)],
+)]
+public string $email;
+
+// Create DTO: email only needs to be unique within the tenant from /tenants/{tenantUuid}/contacts
+#[UniqueField(
+    entityClass: TenantContact::class,
+    field: 'email',
+    scopes: [new UniqueFieldScope('tenant', UniqueFieldScopeSource::RouteParam, 'tenantUuid', scopeEntityClass: Tenant::class)],
+)]
 public string $email;
 ```
 

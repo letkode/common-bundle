@@ -11,6 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-07-17
+
+### Changed
+- **Breaking:** `UniqueField`, `UniqueFieldValidator` and related classes moved from `Letkode\CommonBundle\Attribute\Constraint` to `Letkode\CommonBundle\Attribute\Constraint\UniqueField` (co-located feature folder).
+- **Breaking:** `UniqueField::$skipBySelfProperty`, `$skipRouteParamValue` and `$skipByRouteFieldProperty` removed in favor of a single `UniqueField::$scopes` array of `UniqueFieldScope`. Each scope resolves a value from a route param or a sibling property (`UniqueFieldScopeSource`), then either narrows the lookup via an association (`UniqueFieldScopeMode::Filter`, the old scoping gap) or excludes a match from the violation (`UniqueFieldScopeMode::Exclude`, replaces the old `skip*` params).
+
+### Added
+- `UniqueField` can now scope the uniqueness check to an associated entity (e.g. unique email *per tenant* instead of globally) via `UniqueFieldScope` with `mode: Filter` and `scopeEntityClass`.
+- `UniqueFieldScope` supports resolving values from a sibling DTO property (`UniqueFieldScopeSource::PropertyPath`), not just route params.
+
+### Migration
+```php
+// Before
+#[UniqueField(entityClass: User::class, field: 'email', skipRouteParamValue: 'uuid')]
+
+// After
+#[UniqueField(
+    entityClass: User::class,
+    field: 'email',
+    scopes: [new UniqueFieldScope('uuid', UniqueFieldScopeSource::RouteParam, 'uuid', UniqueFieldScopeMode::Exclude)],
+)]
+```
+
+---
+
 ## [1.0.3] - 2026-06-23
 
 ### Changed
@@ -53,7 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `doctrine/persistence` `^3.0`
 - `letkode/helpers-bundle` `^1.0`
 
-[Unreleased]: https://github.com/letkode/common-bundle/compare/1.0.3...HEAD
+[Unreleased]: https://github.com/letkode/common-bundle/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/letkode/common-bundle/compare/1.0.3...1.1.0
 [1.0.3]: https://github.com/letkode/common-bundle/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/letkode/common-bundle/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/letkode/common-bundle/compare/1.0.0...1.0.1
