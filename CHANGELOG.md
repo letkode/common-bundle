@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-07-18
+
+### Changed
+- **Breaking:** `BuilderUrlClient` no longer reads a single `APP_CLIENT_URL` env var. It now takes `APP_CLIENT_URL_PROTOCOL`, `APP_CLIENT_URL_DOMAIN` (apex domain, without any subdomain) and `APP_CLIENT_URL_PORT` (empty string omits the port).
+
+### Added
+- `BuilderUrlClient::generate()` accepts an optional `$subdomain` argument, prepended to the domain (e.g. a tenant slug, or a fixed value like `"hub"`). `null` (default) builds the bare apex URL, preserving the previous single-tenant behavior.
+
+### Migration
+```dotenv
+# Before
+APP_CLIENT_URL=http://hub.ctr.lvh.me:8080
+
+# After
+APP_CLIENT_URL_PROTOCOL=http
+APP_CLIENT_URL_DOMAIN=ctr.lvh.me
+APP_CLIENT_URL_PORT=8080
+```
+```php
+// Before
+$this->builderUrlClient->generate($path, $params);
+
+// After — apps without a subdomain concept
+$this->builderUrlClient->generate($path, $params);
+
+// After — apps with a subdomain concept (tenant slug, fixed "hub", etc.)
+$this->builderUrlClient->generate($path, $params, subdomain: $slug);
+```
+
+---
+
 ## [1.2.0] - 2026-07-17
 
 ### Added
