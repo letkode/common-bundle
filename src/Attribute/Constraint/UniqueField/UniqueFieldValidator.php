@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Letkode\CommonBundle\Attribute\Constraint\UniqueField;
 
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Container\ContainerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -15,6 +17,8 @@ class UniqueFieldValidator extends ConstraintValidator
     public function __construct(
         private readonly ManagerRegistry $registry,
         private readonly RequestStack $requestStack,
+        #[AutowireLocator(UniqueFieldScopeResolverInterface::class)]
+        private readonly ContainerInterface $scopeResolvers,
     ) {
     }
 
@@ -56,6 +60,18 @@ class UniqueFieldValidator extends ConstraintValidator
 
             if (UniqueFieldScopeMode::ScalarFilter === $scope->mode) {
                 $criteria[$scope->entityField] = $rawValue;
+
+                continue;
+            }
+
+            if (null !== $scope->scopeResolverClass) {
+                $scopeEntity = $this->scopeResolvers->get($scope->scopeResolverClass)->resolve($rawValue);
+
+                if (null === $scopeEntity) {
+                    return;
+                }
+
+                $criteria[$scope->entityField] = $scopeEntity;
 
                 continue;
             }

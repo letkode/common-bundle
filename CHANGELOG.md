@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-08-06
+
+### Added
+- `UniqueFieldScope::$scopeResolverClass` — delegates scope-entity resolution to an app-provided
+  `UniqueFieldScopeResolverInterface` service instead of the built-in flat `findOneBy`. Use it when
+  the scope entity is reachable only through more than one association hop, or needs any business
+  logic beyond a plain lookup. Mutually exclusive with `scopeEntityClass`, only valid with
+  `mode: Filter`.
+
+---
+
 ## [1.3.0] - 2026-07-18
 
 ### Changed

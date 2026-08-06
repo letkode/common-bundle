@@ -10,10 +10,12 @@ use Doctrine\Persistence\ObjectRepository;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueField;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldScope;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldScopeMode;
+use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldScopeResolverInterface;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldScopeSource;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldValidator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -23,6 +25,7 @@ final class UniqueFieldValidatorTest extends TestCase
 {
     private ManagerRegistry&MockObject $registry;
     private RequestStack&MockObject $requestStack;
+    private ContainerInterface&MockObject $scopeResolvers;
     private ExecutionContextInterface&MockObject $context;
     private UniqueFieldValidator $validator;
 
@@ -30,9 +33,10 @@ final class UniqueFieldValidatorTest extends TestCase
     {
         $this->registry = $this->createMock(ManagerRegistry::class);
         $this->requestStack = $this->createMock(RequestStack::class);
+        $this->scopeResolvers = $this->createMock(ContainerInterface::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
 
-        $this->validator = new UniqueFieldValidator($this->registry, $this->requestStack);
+        $this->validator = new UniqueFieldValidator($this->registry, $this->requestStack, $this->scopeResolvers);
         $this->validator->initialize($this->context);
     }
 
@@ -340,6 +344,78 @@ final class UniqueFieldValidatorTest extends TestCase
                 entityClass: \stdClass::class,
                 field: 'taxId',
                 scopes: [new UniqueFieldScope('type', UniqueFieldScopeSource::PropertyPath, 'type', UniqueFieldScopeMode::ScalarFilter)],
+            ),
+        );
+    }
+
+    public function testScopeResolverClassNarrowsLookupByResolvedEntity(): void
+    {
+        $relation = new class {
+            public string $id = 'relation-1';
+        };
+        $existing = new \stdClass();
+
+        $repo = $this->createMock(ObjectRepository::class);
+        $repo->expects(self::once())
+            ->method('findOneBy')
+            ->with(['email' => 'test@example.com', 'companyRelation' => $relation])
+            ->willReturn($existing);
+
+        $em = $this->createMock(ObjectManager::class);
+        $em->method('getRepository')->with(\stdClass::class)->willReturn($repo);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $resolver = $this->createMock(UniqueFieldScopeResolverInterface::class);
+        $resolver->method('resolve')->with('company-uuid')->willReturn($relation);
+        $this->scopeResolvers->method('get')->with('SomeResolverClass')->willReturn($resolver);
+
+        $request = Request::create('/');
+        $request->attributes->set('companyId', 'company-uuid');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $this->context->method('buildViolation')->willReturn($this->mockViolationBuilder(expectAddViolation: true));
+
+        $this->validator->validate(
+            'test@example.com',
+            new UniqueField(
+                entityClass: \stdClass::class,
+                field: 'email',
+                scopes: [new UniqueFieldScope(
+                    'companyRelation',
+                    UniqueFieldScopeSource::RouteParam,
+                    'companyId',
+                    scopeResolverClass: 'SomeResolverClass',
+                )],
+            ),
+        );
+    }
+
+    public function testScopeResolverClassSkipsWhenResolverReturnsNull(): void
+    {
+        $em = $this->mockEm(\stdClass::class, null);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $resolver = $this->createMock(UniqueFieldScopeResolverInterface::class);
+        $resolver->method('resolve')->willReturn(null);
+        $this->scopeResolvers->method('get')->with('SomeResolverClass')->willReturn($resolver);
+
+        $request = Request::create('/');
+        $request->attributes->set('companyId', 'missing-company');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $this->context->expects(self::never())->method('buildViolation');
+
+        $this->validator->validate(
+            'test@example.com',
+            new UniqueField(
+                entityClass: \stdClass::class,
+                field: 'email',
+                scopes: [new UniqueFieldScope(
+                    'companyRelation',
+                    UniqueFieldScopeSource::RouteParam,
+                    'companyId',
+                    scopeResolverClass: 'SomeResolverClass',
+                )],
             ),
         );
     }
