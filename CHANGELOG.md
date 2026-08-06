@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.1] - 2026-08-06
+
+### Fixed
+- `UniqueFieldScopeResolverInterface` now carries `#[AutoconfigureTag]`. Without it, the
+  `AutowireLocator` in `UniqueFieldValidator` resolved to an empty locator — `AutowireLocator`'s
+  string argument is a tag name, not an "implements" lookup, so implementing services never
+  reached it. `scopeResolverClass` was unusable in 1.4.0.
+
 ## [1.4.0] - 2026-08-06
 
 ### Added
