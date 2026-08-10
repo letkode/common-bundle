@@ -21,7 +21,7 @@ final class UniqueFieldScopeTest extends TestCase
             UniqueFieldScopeSource::RouteParam,
             'companyId',
             scopeEntityClass: \stdClass::class,
-            scopeResolverClass: 'SomeResolverClass',
+            scopeResolverClass: DummyScopeResolver::class,
         );
     }
 
@@ -35,7 +35,7 @@ final class UniqueFieldScopeTest extends TestCase
             UniqueFieldScopeSource::RouteParam,
             'companyId',
             UniqueFieldScopeMode::Exclude,
-            scopeResolverClass: 'SomeResolverClass',
+            scopeResolverClass: DummyScopeResolver::class,
         );
     }
 
@@ -45,9 +45,9 @@ final class UniqueFieldScopeTest extends TestCase
             'companyRelation',
             UniqueFieldScopeSource::RouteParam,
             'companyId',
-            scopeResolverClass: 'SomeResolverClass',
+            scopeResolverClass: DummyScopeResolver::class,
         );
 
-        self::assertSame('SomeResolverClass', $scope->scopeResolverClass);
+        self::assertSame(DummyScopeResolver::class, $scope->scopeResolverClass);
     }
 }

@@ -17,7 +17,7 @@ final readonly class JsonReader
     /**
      * @return array<mixed>|null null when the file does not exist
      *
-     * @throws \RuntimeException on read failure
+     * @throws \RuntimeException on read failure or when the JSON root is not an object/array
      * @throws \JsonException    on invalid JSON
      */
     public function read(string $filename, string|null $folder = null): array|null
@@ -34,6 +34,12 @@ final readonly class JsonReader
             throw new \RuntimeException(\sprintf('Could not read file "%s".', $filePath));
         }
 
-        return json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+        $decoded = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+
+        if (!\is_array($decoded)) {
+            throw new \RuntimeException(\sprintf('Expected JSON object or array in "%s", got %s.', $filePath, get_debug_type($decoded)));
+        }
+
+        return $decoded;
     }
 }

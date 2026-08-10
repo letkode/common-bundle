@@ -42,6 +42,9 @@ final class HttpStatusExceptionsTest extends TestCase
         self::assertInstanceOf(\RuntimeException::class, $exception);
     }
 
+    /**
+     * @param class-string<HttpStatusExceptionInterface&\RuntimeException> $class
+     */
     #[DataProvider('exceptionStatusProvider')]
     public function testExceptionCarriesMessage(string $class, int $expectedStatus): void
     {
@@ -50,6 +53,9 @@ final class HttpStatusExceptionsTest extends TestCase
         self::assertSame('Something went wrong.', $exception->getMessage());
     }
 
+    /**
+     * @param class-string<HttpStatusExceptionInterface&\RuntimeException> $class
+     */
     #[DataProvider('exceptionStatusProvider')]
     public function testExceptionIsThrowable(string $class, int $expectedStatus): void
     {

@@ -6,6 +6,7 @@ namespace Letkode\CommonBundle\Tests\ValueResolver;
 
 use Letkode\CommonBundle\Attribute\Mapping\MapUuid;
 use Letkode\CommonBundle\ValueResolver\UuidValueResolver;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
@@ -15,7 +16,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class UuidValueResolverTest extends TestCase
 {
-    private TranslatorInterface $translator;
+    private TranslatorInterface&MockObject $translator;
     private UuidValueResolver $resolver;
 
     protected function setUp(): void

@@ -53,7 +53,7 @@ class UniqueFieldValidator extends ConstraintValidator
             }
 
             if (UniqueFieldScopeMode::Exclude === $scope->mode) {
-                $excludes[] = [$scope->entityField, (string) $rawValue];
+                $excludes[] = [$scope->entityField, \is_scalar($rawValue) || $rawValue instanceof \Stringable ? (string) $rawValue : ''];
 
                 continue;
             }
@@ -65,7 +65,13 @@ class UniqueFieldValidator extends ConstraintValidator
             }
 
             if (null !== $scope->scopeResolverClass) {
-                $scopeEntity = $this->scopeResolvers->get($scope->scopeResolverClass)->resolve($rawValue);
+                $resolver = $this->scopeResolvers->get($scope->scopeResolverClass);
+
+                if (!$resolver instanceof UniqueFieldScopeResolverInterface) {
+                    throw new \LogicException(\sprintf('Service "%s" must implement %s.', $scope->scopeResolverClass, UniqueFieldScopeResolverInterface::class));
+                }
+
+                $scopeEntity = $resolver->resolve($rawValue);
 
                 if (null === $scopeEntity) {
                     return;
@@ -98,14 +104,14 @@ class UniqueFieldValidator extends ConstraintValidator
         foreach ($excludes as [$entityField, $expected]) {
             $actual = new \ReflectionProperty($existing, $entityField)->getValue($existing);
 
-            if (null !== $actual && (string) $actual === $expected) {
+            if (null !== $actual && (\is_scalar($actual) || $actual instanceof \Stringable) && (string) $actual === $expected) {
                 return;
             }
         }
 
         $this->context->buildViolation($constraint->message)
             ->setParameter('{{ field }}', $constraint->field)
-            ->setParameter('{{ value }}', (string) $value)
+            ->setParameter('{{ value }}', \is_scalar($value) || $value instanceof \Stringable ? (string) $value : \gettype($value))
             ->addViolation();
     }
 

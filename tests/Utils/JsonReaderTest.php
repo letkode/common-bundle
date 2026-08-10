@@ -19,10 +19,15 @@ final class JsonReaderTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach (glob($this->tmpDir . '/*') ?: [] as $file) {
-            unlink($file);
+        $this->removeDirectory($this->tmpDir);
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        foreach (glob($dir . '/*') ?: [] as $path) {
+            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
         }
-        rmdir($this->tmpDir);
+        rmdir($dir);
     }
 
     public function testReadsValidJsonFile(): void

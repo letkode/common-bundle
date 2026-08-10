@@ -9,7 +9,10 @@ use Symfony\Component\Validator\Constraint;
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::IS_REPEATABLE)]
 class UniqueField extends Constraint
 {
-    /** @param UniqueFieldScope[] $scopes */
+    /**
+     * @param class-string       $entityClass
+     * @param UniqueFieldScope[] $scopes
+     */
     public function __construct(
         public readonly string $entityClass,
         public readonly string $field,

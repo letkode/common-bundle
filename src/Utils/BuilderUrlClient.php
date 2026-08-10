@@ -24,7 +24,7 @@ final readonly class BuilderUrlClient
 
     /**
      * @param array<string, scalar> $parameters placeholder values and/or extra query params
-     * @param string|null $subdomain prepended to the domain (e.g. tenant slug, "hub"); null builds the bare apex URL
+     * @param string|null           $subdomain  prepended to the domain (e.g. tenant slug, "hub"); null builds the bare apex URL
      */
     public function generate(string $path, array $parameters = [], string|null $subdomain = null): string
     {
@@ -58,6 +58,6 @@ final readonly class BuilderUrlClient
     {
         preg_match_all(self::PLACEHOLDER_PATTERN, $path, $matches);
 
-        return $matches[1] ?? [];
+        return $matches[1];
     }
 }

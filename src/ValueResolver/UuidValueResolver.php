@@ -20,6 +20,9 @@ final readonly class UuidValueResolver implements ValueResolverInterface
     {
     }
 
+    /**
+     * @return iterable<Uuid>
+     */
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
         /** @var MapUuid|null $attribute */

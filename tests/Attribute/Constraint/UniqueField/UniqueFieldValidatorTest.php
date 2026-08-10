@@ -367,7 +367,7 @@ final class UniqueFieldValidatorTest extends TestCase
 
         $resolver = $this->createMock(UniqueFieldScopeResolverInterface::class);
         $resolver->method('resolve')->with('company-uuid')->willReturn($relation);
-        $this->scopeResolvers->method('get')->with('SomeResolverClass')->willReturn($resolver);
+        $this->scopeResolvers->method('get')->with(DummyScopeResolver::class)->willReturn($resolver);
 
         $request = Request::create('/');
         $request->attributes->set('companyId', 'company-uuid');
@@ -384,7 +384,7 @@ final class UniqueFieldValidatorTest extends TestCase
                     'companyRelation',
                     UniqueFieldScopeSource::RouteParam,
                     'companyId',
-                    scopeResolverClass: 'SomeResolverClass',
+                    scopeResolverClass: DummyScopeResolver::class,
                 )],
             ),
         );
@@ -397,7 +397,7 @@ final class UniqueFieldValidatorTest extends TestCase
 
         $resolver = $this->createMock(UniqueFieldScopeResolverInterface::class);
         $resolver->method('resolve')->willReturn(null);
-        $this->scopeResolvers->method('get')->with('SomeResolverClass')->willReturn($resolver);
+        $this->scopeResolvers->method('get')->with(DummyScopeResolver::class)->willReturn($resolver);
 
         $request = Request::create('/');
         $request->attributes->set('companyId', 'missing-company');
@@ -414,7 +414,7 @@ final class UniqueFieldValidatorTest extends TestCase
                     'companyRelation',
                     UniqueFieldScopeSource::RouteParam,
                     'companyId',
-                    scopeResolverClass: 'SomeResolverClass',
+                    scopeResolverClass: DummyScopeResolver::class,
                 )],
             ),
         );

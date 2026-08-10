@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.2] - 2026-08-10
+
+### Fixed
+- `phpstan.neon` added (was required as a dev dependency but never configured); package is now phpstan level 9 clean
+- `UniqueField::$entityClass` and `UniqueFieldValidator` scope-value handling now use proper `class-string` typing and scalar narrowing instead of unchecked casts on `mixed`
+- `UniqueFieldValidator` now throws a clear `LogicException` if a resolved `scopeResolverClass` service doesn't actually implement `UniqueFieldScopeResolverInterface`, instead of a fatal error on the next method call
+- `JsonReader::read()` now throws if the decoded JSON root isn't an object/array, instead of silently returning a scalar and violating its own `array<mixed>|null` return type
+- `BuilderUrlClient::extractPlaceholderKeys()` dead `?? []` fallback removed (the key always exists after `preg_match_all()`)
+- `UuidValueResolver::resolve()` return type documented as `iterable<Uuid>`
+- `JsonReaderTest` temp-directory cleanup fixed — it left a `sub/` subdirectory behind and emitted PHPUnit warnings on every run
+
+No behavior changes for well-formed input; 59 tests unchanged and passing.
+
+---
+
 ## [1.4.1] - 2026-08-06
 
 ### Fixed
