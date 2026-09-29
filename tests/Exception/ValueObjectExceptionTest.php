@@ -30,4 +30,9 @@ final class ValueObjectExceptionTest extends TestCase
         $this->expectException(ValueObjectException::class);
         throw new ValueObjectException('fail', translationKey: 'key');
     }
+
+    public function testIsNotFinalSoItCanBeExtended(): void
+    {
+        self::assertFalse(new \ReflectionClass(ValueObjectException::class)->isFinal());
+    }
 }
