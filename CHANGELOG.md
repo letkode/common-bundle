@@ -13,20 +13,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** `ValueObjectException` moved from `Letkode\CommonBundle\Exception` to `Letkode\CommonBundle\Exception\Validation`.
 
 ### Removed
-- **Breaking:** the HTTP status exceptions (`BadRequestException`, `EntityNotFoundException`, `TooManyRequestsException`, `UnauthorizedException`) and `HttpStatusExceptionInterface` were extracted; the full HTTP exception set now lives in the new package `letkode/http-exception-bundle` (namespace `Letkode\HttpExceptionBundle`). They are not re-exported here.
+- **Breaking:** the HTTP status exceptions and their interface moved to the new package [`letkode/http-exception-bundle`](https://github.com/letkode/http-exception-bundle) (namespace `Letkode\HttpExceptionBundle`). They are not re-exported from `common-bundle`.
+
+  | Before (`letkode/common-bundle` 1.x) | Now (`letkode/http-exception-bundle`) |
+  |---|---|
+  | `Letkode\CommonBundle\Exception\BadRequestException` | `Letkode\HttpExceptionBundle\Exception\BadRequestException` |
+  | `Letkode\CommonBundle\Exception\UnauthorizedException` | `Letkode\HttpExceptionBundle\Exception\UnauthorizedException` |
+  | `Letkode\CommonBundle\Exception\EntityNotFoundException` | `Letkode\HttpExceptionBundle\Exception\EntityNotFoundException` |
+  | `Letkode\CommonBundle\Exception\TooManyRequestsException` | `Letkode\HttpExceptionBundle\Exception\TooManyRequestsException` |
+  | `Letkode\CommonBundle\Exception\HttpStatusExceptionInterface` | `Letkode\HttpExceptionBundle\Contract\HttpStatusExceptionInterface` |
+
+  The new package also provides the rest of the common HTTP status exceptions, `TranslationOption` and a JSON `ExceptionListener`; see its README.
 
 ### Migration
+```bash
+composer require letkode/http-exception-bundle
+```
 ```php
 // Before
 use Letkode\CommonBundle\Exception\BadRequestException;
 use Letkode\CommonBundle\Exception\HttpStatusExceptionInterface;
 use Letkode\CommonBundle\Exception\ValueObjectException;
 
-// After (composer require letkode/http-exception-bundle)
+// After
 use Letkode\HttpExceptionBundle\Exception\BadRequestException;
 use Letkode\HttpExceptionBundle\Contract\HttpStatusExceptionInterface;
 use Letkode\CommonBundle\Exception\Validation\ValueObjectException;
 ```
+The 2nd constructor argument of the moved exceptions is now the string `errorCode` (not an int `$code`); `getCode()` is always 0. Pass the previous exception as the 3rd argument (`previous:`).
 
 ---
 
