@@ -31,7 +31,7 @@ return [
 throw new ValueObjectException('Invalid email.', translationKey: 'errors.email_invalid');
 ```
 
-The HTTP status exceptions (`BadRequestException`, `NotFoundException`, ...) and the JSON `ExceptionListener` now live in [`letkode/http-exception-bundle`](../http-exception-bundle).
+The HTTP status exceptions (`BadRequestException`, `NotFoundException`, ...) and the JSON `ExceptionListener` now live in `letkode/http-exception-bundle`.
 
 ### Attributes
 
