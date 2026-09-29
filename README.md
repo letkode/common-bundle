@@ -25,20 +25,13 @@ return [
 
 ### Exceptions
 
-All exceptions implement `HttpStatusExceptionInterface` and map directly to an HTTP status code. Throw them from services — the `ExceptionListener` in your project converts them to JSON responses.
-
-| Class | HTTP |
-|---|---|
-| `BadRequestException` | 400 |
-| `UnauthorizedException` | 401 |
-| `EntityNotFoundException` | 404 |
-| `TooManyRequestsException` | 429 |
-| `ValueObjectException` | 422 |
+`ValueObjectException` is thrown by value objects that reject invalid input. It carries a translation key and its parameters so the caller can translate the message in the `validators` domain.
 
 ```php
-throw new EntityNotFoundException('User not found.');
 throw new ValueObjectException('Invalid email.', translationKey: 'errors.email_invalid');
 ```
+
+The HTTP status exceptions (`BadRequestException`, `NotFoundException`, ...) and the JSON `ExceptionListener` now live in [`letkode/http-exception-bundle`](../http-exception-bundle).
 
 ### Attributes
 

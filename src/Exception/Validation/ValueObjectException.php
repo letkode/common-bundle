@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Letkode\CommonBundle\Exception;
+namespace Letkode\CommonBundle\Exception\Validation;
 
 final class ValueObjectException extends \InvalidArgumentException
 {

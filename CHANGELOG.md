@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** `ValueObjectException` moved from `Letkode\CommonBundle\Exception` to `Letkode\CommonBundle\Exception\Validation`.
+
+### Removed
+- **Breaking:** the HTTP status exceptions (`BadRequestException`, `EntityNotFoundException`, `TooManyRequestsException`, `UnauthorizedException`), `HttpStatusExceptionInterface` and the new HTTP exception classes were extracted to the new package `letkode/http-exception-bundle` (namespace `Letkode\HttpExceptionBundle`). They are not re-exported here.
+
+### Migration
+```php
+// Before
+use Letkode\CommonBundle\Exception\BadRequestException;
+use Letkode\CommonBundle\Exception\HttpStatusExceptionInterface;
+use Letkode\CommonBundle\Exception\ValueObjectException;
+
+// After (composer require letkode/http-exception-bundle)
+use Letkode\HttpExceptionBundle\Exception\BadRequestException;
+use Letkode\HttpExceptionBundle\Contract\HttpStatusExceptionInterface;
+use Letkode\CommonBundle\Exception\Validation\ValueObjectException;
+```
+
 ---
 
 ## [1.4.2] - 2026-08-10
