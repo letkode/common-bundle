@@ -66,6 +66,27 @@ public string $email;
 public string $email;
 ```
 
+Use `valueTransformer` to compare the value in the same form it is stored in. Implement
+`UniqueFieldValueTransformerInterface` in an autowired/autoconfigured service and reference its
+class; the validator transforms the value before the lookup and reports the transformed value in
+the violation. A transformer returning `null` or `''` skips the check.
+
+```php
+final class LowercaseTransformer implements UniqueFieldValueTransformerInterface
+{
+    public function transform(mixed $value, object|null $object, string|null $property): mixed
+    {
+        return \is_string($value) ? mb_strtolower(trim($value)) : $value;
+    }
+}
+
+#[UniqueField(entityClass: User::class, field: 'email', valueTransformer: LowercaseTransformer::class)]
+public string $email;
+```
+
+Transformers must be idempotent (transforming an already-transformed value returns it unchanged).
+Scopes keep reading the original sibling values.
+
 #### `#[MapUuid]` — Mapping
 
 Marks a constructor parameter or property for automatic UUID deserialization.

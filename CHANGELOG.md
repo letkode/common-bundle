@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - YYYY-MM-DD
+
+### Added
+- `UniqueField::$valueTransformer`: an optional `class-string<UniqueFieldValueTransformerInterface>` whose service transforms the value before the uniqueness lookup (and in the violation message). Resolved through an `AutowireLocator`, like scope resolvers. Nothing that worked before changes.
+
+---
+
 ## [2.1.0] - 2026-09-29
 
 ### Changed
