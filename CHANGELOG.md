@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.2.0] - YYYY-MM-DD
+## [2.2.0] - 2026-10-08
 
 ### Added
 - `UniqueField::$valueTransformer`: an optional `class-string<UniqueFieldValueTransformerInterface>` whose service transforms the value before the uniqueness lookup (and in the violation message). Resolved through an `AutowireLocator`, like scope resolvers. Nothing that worked before changes.
+- `UniqueFieldValueTransformerInterface` (`transform(mixed $value, ?object $object, ?string $property): mixed`), auto-tagged with `#[AutoconfigureTag]`. A transformer returning `null` or `''` skips the check; scopes keep reading the original sibling values. Transformers must be idempotent.
+- A transformer that is not a registered service, or does not implement the interface, throws a `LogicException` with an explicit message.
 
 ---
 
