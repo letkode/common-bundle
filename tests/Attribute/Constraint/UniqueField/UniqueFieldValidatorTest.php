@@ -13,6 +13,7 @@ use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldScopeMode;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldScopeResolverInterface;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldScopeSource;
 use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldValidator;
+use Letkode\CommonBundle\Attribute\Constraint\UniqueField\UniqueFieldValueTransformerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -27,6 +28,7 @@ final class UniqueFieldValidatorTest extends TestCase
     private RequestStack&MockObject $requestStack;
     private ContainerInterface&MockObject $scopeResolvers;
     private ExecutionContextInterface&MockObject $context;
+    private ContainerInterface&MockObject $valueTransformers;
     private UniqueFieldValidator $validator;
 
     protected function setUp(): void
@@ -36,7 +38,9 @@ final class UniqueFieldValidatorTest extends TestCase
         $this->scopeResolvers = $this->createMock(ContainerInterface::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
 
-        $this->validator = new UniqueFieldValidator($this->registry, $this->requestStack, $this->scopeResolvers);
+        $this->valueTransformers = $this->createMock(ContainerInterface::class);
+
+        $this->validator = new UniqueFieldValidator($this->registry, $this->requestStack, $this->scopeResolvers, $this->valueTransformers);
         $this->validator->initialize($this->context);
     }
 
@@ -418,6 +422,182 @@ final class UniqueFieldValidatorTest extends TestCase
                 )],
             ),
         );
+    }
+
+    public function testValueTransformerIsAppliedToTheLookupCriteria(): void
+    {
+        $dto = new class {
+            public string $email = 'John@Example.COM';
+        };
+
+        $repo = $this->createMock(ObjectRepository::class);
+        $repo->expects(self::once())
+            ->method('findOneBy')
+            ->with(['email' => 'john@example.com'])
+            ->willReturn(null);
+        $em = $this->createMock(ObjectManager::class);
+        $em->method('getRepository')->with(\stdClass::class)->willReturn($repo);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $this->context->method('getObject')->willReturn($dto);
+        $this->context->method('getPropertyName')->willReturn('email');
+
+        $transformer = $this->createMock(UniqueFieldValueTransformerInterface::class);
+        $transformer->expects(self::once())
+            ->method('transform')
+            ->with('John@Example.COM', $dto, 'email')
+            ->willReturn('john@example.com');
+        $this->valueTransformers->method('has')->with(DummyValueTransformer::class)->willReturn(true);
+        $this->valueTransformers->method('get')->with(DummyValueTransformer::class)->willReturn($transformer);
+
+        $this->validator->validate(
+            'John@Example.COM',
+            new UniqueField(entityClass: \stdClass::class, field: 'email', valueTransformer: DummyValueTransformer::class),
+        );
+    }
+
+    public function testViolationReportsTheTransformedValue(): void
+    {
+        $em = $this->mockEm(\stdClass::class, new \stdClass());
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $this->valueTransformers->method('has')->willReturn(true);
+        $this->valueTransformers->method('get')->willReturn(new DummyValueTransformer());
+
+        $parameters = [];
+        $builder = $this->createMock(ConstraintViolationBuilderInterface::class);
+        $builder->method('setParameter')->willReturnCallback(
+            static function (string $key, string $value) use (&$parameters, $builder): ConstraintViolationBuilderInterface {
+                $parameters[$key] = $value;
+
+                return $builder;
+            },
+        );
+        $builder->expects(self::once())->method('addViolation');
+        $this->context->method('buildViolation')->willReturn($builder);
+
+        $this->validator->validate(
+            'John@Example.COM',
+            new UniqueField(entityClass: \stdClass::class, field: 'email', valueTransformer: DummyValueTransformer::class),
+        );
+
+        self::assertSame('john@example.com', $parameters['{{ value }}']);
+    }
+
+    public function testSkipsWhenTheTransformerReturnsAnEmptyValue(): void
+    {
+        $this->registry->expects(self::never())->method('getManagerForClass');
+
+        $transformer = $this->createMock(UniqueFieldValueTransformerInterface::class);
+        $transformer->method('transform')->willReturn('');
+        $this->valueTransformers->method('has')->willReturn(true);
+        $this->valueTransformers->method('get')->willReturn($transformer);
+
+        $this->validator->validate(
+            '   ',
+            new UniqueField(entityClass: \stdClass::class, field: 'email', valueTransformer: DummyValueTransformer::class),
+        );
+    }
+
+    public function testTransformerReceivesNullObjectWithoutAnObjectContext(): void
+    {
+        $em = $this->mockEm(\stdClass::class, null);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $this->context->method('getObject')->willReturn(null);
+        $this->context->method('getPropertyName')->willReturn(null);
+
+        $transformer = $this->createMock(UniqueFieldValueTransformerInterface::class);
+        $transformer->expects(self::once())->method('transform')->with('A@B.C', null, null)->willReturn('a@b.c');
+        $this->valueTransformers->method('has')->willReturn(true);
+        $this->valueTransformers->method('get')->willReturn($transformer);
+
+        $this->validator->validate(
+            'A@B.C',
+            new UniqueField(entityClass: \stdClass::class, field: 'email', valueTransformer: DummyValueTransformer::class),
+        );
+    }
+
+    public function testScopesReadTheOriginalSiblingValues(): void
+    {
+        $dto = new class {
+            public string $code = 'ABC';
+            public string $type = 'Mixed-Case';
+        };
+
+        $repo = $this->createMock(ObjectRepository::class);
+        $repo->expects(self::once())
+            ->method('findOneBy')
+            ->with(['code' => 'abc', 'type' => 'Mixed-Case'])
+            ->willReturn(null);
+        $em = $this->createMock(ObjectManager::class);
+        $em->method('getRepository')->with(\stdClass::class)->willReturn($repo);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $this->context->method('getObject')->willReturn($dto);
+        $this->valueTransformers->method('has')->willReturn(true);
+        $this->valueTransformers->method('get')->willReturn(new DummyValueTransformer());
+
+        $this->validator->validate(
+            'ABC',
+            new UniqueField(
+                entityClass: \stdClass::class,
+                field: 'code',
+                scopes: [new UniqueFieldScope('type', UniqueFieldScopeSource::PropertyPath, 'type', UniqueFieldScopeMode::ScalarFilter)],
+                valueTransformer: DummyValueTransformer::class,
+            ),
+        );
+    }
+
+    public function testThrowsWhenTheTransformerIsNotARegisteredService(): void
+    {
+        $this->valueTransformers->method('has')->willReturn(false);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('is not a registered service');
+
+        $this->validator->validate(
+            'x',
+            new UniqueField(entityClass: \stdClass::class, field: 'email', valueTransformer: DummyValueTransformer::class),
+        );
+    }
+
+    public function testThrowsWhenTheServiceDoesNotImplementTheInterface(): void
+    {
+        $this->valueTransformers->method('has')->willReturn(true);
+        $this->valueTransformers->method('get')->willReturn(new \stdClass());
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('must implement');
+
+        $this->validator->validate(
+            'x',
+            new UniqueField(entityClass: \stdClass::class, field: 'email', valueTransformer: DummyValueTransformer::class),
+        );
+    }
+
+    public function testThrowsWhenNoTransformerLocatorWasInjected(): void
+    {
+        $validator = new UniqueFieldValidator($this->registry, $this->requestStack, $this->scopeResolvers);
+        $validator->initialize($this->context);
+
+        $this->expectException(\LogicException::class);
+
+        $validator->validate(
+            'x',
+            new UniqueField(entityClass: \stdClass::class, field: 'email', valueTransformer: DummyValueTransformer::class),
+        );
+    }
+
+    public function testWithoutTransformerTheLocatorIsNeverTouched(): void
+    {
+        $em = $this->mockEm(\stdClass::class, null);
+        $this->registry->method('getManagerForClass')->willReturn($em);
+
+        $this->valueTransformers->expects(self::never())->method('has');
+        $this->valueTransformers->expects(self::never())->method('get');
+
+        $this->validator->validate('Raw@Value', new UniqueField(entityClass: \stdClass::class, field: 'email'));
     }
 
     private function mockEm(string $class, mixed $findResult): ObjectManager&MockObject

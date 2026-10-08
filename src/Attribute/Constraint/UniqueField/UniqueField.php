@@ -10,8 +10,10 @@ use Symfony\Component\Validator\Constraint;
 class UniqueField extends Constraint
 {
     /**
-     * @param class-string       $entityClass
-     * @param UniqueFieldScope[] $scopes
+     * @param class-string                                            $entityClass
+     * @param UniqueFieldScope[]                                      $scopes
+     * @param class-string<UniqueFieldValueTransformerInterface>|null $valueTransformer service that
+     *                                                                                  transforms the value before the lookup
      */
     public function __construct(
         public readonly string $entityClass,
@@ -21,6 +23,7 @@ class UniqueField extends Constraint
         public readonly array $scopes = [],
         array|null $groups = null,
         mixed $payload = null,
+        public readonly string|null $valueTransformer = null,
     ) {
         parent::__construct(groups: $groups, payload: $payload);
     }

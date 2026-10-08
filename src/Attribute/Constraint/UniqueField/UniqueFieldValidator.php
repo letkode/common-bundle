@@ -19,6 +19,8 @@ class UniqueFieldValidator extends ConstraintValidator
         private readonly RequestStack $requestStack,
         #[AutowireLocator(UniqueFieldScopeResolverInterface::class)]
         private readonly ContainerInterface $scopeResolvers,
+        #[AutowireLocator(UniqueFieldValueTransformerInterface::class)]
+        private readonly ContainerInterface|null $valueTransformers = null,
     ) {
     }
 
@@ -30,6 +32,14 @@ class UniqueFieldValidator extends ConstraintValidator
 
         if (null === $value || '' === $value) {
             return;
+        }
+
+        if (null !== $constraint->valueTransformer) {
+            $value = $this->transformValue($value, $constraint->valueTransformer);
+
+            if (null === $value || '' === $value) {
+                return;
+            }
         }
 
         $em = null !== $constraint->em
@@ -113,6 +123,21 @@ class UniqueFieldValidator extends ConstraintValidator
             ->setParameter('{{ field }}', $constraint->field)
             ->setParameter('{{ value }}', \is_scalar($value) || $value instanceof \Stringable ? (string) $value : \gettype($value))
             ->addViolation();
+    }
+
+    private function transformValue(mixed $value, string $transformerClass): mixed
+    {
+        if (null === $this->valueTransformers || !$this->valueTransformers->has($transformerClass)) {
+            throw new \LogicException(\sprintf('Value transformer "%s" is not a registered service. Make sure it is autowired and autoconfigured and implements %s.', $transformerClass, UniqueFieldValueTransformerInterface::class));
+        }
+
+        $transformer = $this->valueTransformers->get($transformerClass);
+
+        if (!$transformer instanceof UniqueFieldValueTransformerInterface) {
+            throw new \LogicException(\sprintf('Service "%s" must implement %s.', $transformerClass, UniqueFieldValueTransformerInterface::class));
+        }
+
+        return $transformer->transform($value, $this->context->getObject(), $this->context->getPropertyName());
     }
 
     private function resolveScopeValue(UniqueFieldScope $scope): mixed
