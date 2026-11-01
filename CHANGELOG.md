@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2026-11-01
+
+### Added
+- `OpenApi\DocAttributeRouteDescriber`, a NelmioApiDocBundle route describer that applies the `#[OA\*]` operations of a "Doc" class referenced by an attribute on the controller class or method. Nelmio instantiates such an attribute and ignores it, so a Doc kept apart from its controller never reached the generated specification. An operation applies to a route when its HTTP method and, if declared, its path match; where it conflicts with what Nelmio generated the Doc wins (`tags` united, `parameters` matched by `in` and `name`, `responses` by status code), without the "Multiple definitions" errors `mergeProperties()` raises.
+- It is registered only when `nelmio/api-doc-bundle` is installed (now a `suggest`), tagged `nelmio_api_doc.route_describer` with priority `-500` so it runs after Nelmio's own describers.
+
+---
+
 ## [2.2.0] - 2026-10-08
 
 ### Added

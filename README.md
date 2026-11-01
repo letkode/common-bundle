@@ -102,6 +102,36 @@ Automatically resolves `Uuid` typed route parameters without manual conversion.
 public function show(Uuid $uuid): JsonResponse { ... }
 ```
 
+### OpenAPI
+
+#### `DocAttributeRouteDescriber`
+
+Optional: registered only when [`nelmio/api-doc-bundle`](https://github.com/nelmio/NelmioApiDocBundle) `^5.10` is installed.
+
+NelmioApiDocBundle only reads `#[OA\*]` attributes declared on the controller class or method itself. To keep the
+documentation apart from the controller, declare an attribute class that carries the operations and apply it to the
+controller; the describer merges them into the generated specification:
+
+```php
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+#[OA\Get(path: '/api/companies', summary: 'List companies', responses: [new OA\Response(response: 200, description: 'OK')])]
+#[OA\Post(path: '/api/companies', summary: 'Create company')]
+final class DocCompaniesEndpoints {}
+
+#[Route('/api/companies')]
+#[DocCompaniesEndpoints]
+final class CompanyController { /* ... */ }
+```
+
+- Without the describer Nelmio instantiates `#[DocCompaniesEndpoints]` and ignores it: none of its operations reach the specification.
+- An operation applies to a route when its HTTP method matches and, if it declares a `path`, the path matches the route's.
+  Place the attribute on a method to document just that route (an operation without `path` then applies to it).
+- The Doc takes precedence over what Nelmio generated: `tags` are united, `parameters` and `responses` are matched by
+  (`in`, `name`) and by status code, and any other property the Doc defines (summary, description, request body...) replaces it.
+  A parameter generated from `#[MapQueryString]` therefore keeps its own entry unless the Doc declares one with the same name,
+  which is how a Doc can add e.g. an `enum` to `sort`.
+- Only operations (`OA\Get`, `OA\Post`, ...) are applied; a root `OA\Response`, `OA\Parameter` or `OA\RequestBody` on a Doc class is ignored.
+
 ### Utils
 
 #### `BuilderUrlClient`

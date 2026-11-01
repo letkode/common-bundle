@@ -10,3 +10,4 @@ services:
             - '../src/LetkodeCommonBundle.php'
             - '../src/Exception/'
             - '../src/Attribute/Mapping/'
+            - '../src/OpenApi/'

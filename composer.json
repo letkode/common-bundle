@@ -18,7 +18,12 @@
     "require-dev": {
         "phpunit/phpunit": "^11",
         "phpstan/phpstan": "^2",
-        "friendsofphp/php-cs-fixer": "^3.95"
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "nelmio/api-doc-bundle": "^5.10",
+        "zircote/swagger-php": "^6.0"
+    },
+    "suggest": {
+        "nelmio/api-doc-bundle": "Enables DocAttributeRouteDescriber, which applies the OpenAPI attributes of a Doc class referenced by a controller attribute (^5.10)"
     },
     "autoload": {
         "psr-4": {
